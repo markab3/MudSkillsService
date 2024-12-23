@@ -102,11 +102,11 @@ namespace MudSkillsService.Helpers
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("PlayerSkill_Player_fkey");
 
-                entity.HasOne(d => d.Skill)
-                    .WithMany(p => p.PlayerSkills)
-                    .HasForeignKey(d => d.SkillId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("PlayerSkill_Skill_fkey");
+                // entity.HasOne(d => d.Skill)
+                //     .WithMany(p => p.PlayerSkills)
+                //     .HasForeignKey(d => d.SkillId)
+                //     .OnDelete(DeleteBehavior.ClientSetNull)
+                //     .HasConstraintName("PlayerSkill_Skill_fkey");
             });
 
             modelBuilder.Entity<Skill>(entity =>
