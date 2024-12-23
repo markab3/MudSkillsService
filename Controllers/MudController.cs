@@ -23,16 +23,22 @@ namespace MudSkillsService.Controllers
 
         // GET: api/Mud
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Mud>>> GetMud()
+        public async Task<ActionResult<IEnumerable<Mud>>> GetMud([FromQuery] bool includeDeleted = false)
         {
-            return await _context.Mud.ToListAsync();
+            if (includeDeleted)
+            {
+                return await _context.Mud.ToListAsync();
+            }
+            return await _context.Mud.Where(m => m.DateDeleted == null).ToListAsync();
         }
 
         // GET: api/Mud/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Mud>> GetMud(int id)
+        public async Task<ActionResult<Mud>> GetMud(int id, [FromQuery] bool includeDeleted = false)
         {
-            var mud = await _context.Mud.FindAsync(id);
+            var mud = includeDeleted
+                ? await _context.Mud.FindAsync(id)
+                : await _context.Mud.Where(m => m.MudId == id && m.DateDeleted == null).FirstOrDefaultAsync();
 
             if (mud == null)
             {
@@ -94,7 +100,8 @@ namespace MudSkillsService.Controllers
                 return NotFound();
             }
 
-            _context.Mud.Remove(mud);
+            mud.DateDeleted = DateTime.UtcNow;
+            _context.Entry(mud).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();

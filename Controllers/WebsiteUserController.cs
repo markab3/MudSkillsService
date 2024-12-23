@@ -21,16 +21,22 @@ namespace MudSkillsService.Controllers
 
         // GET: api/WebsiteUser
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<WebsiteUser>>> GetWebsiteUsers()
+        public async Task<ActionResult<IEnumerable<WebsiteUser>>> GetWebsiteUsers([FromQuery] bool includeDeleted = false)
         {
-            return await _context.WebsiteUsers.ToListAsync();
+            if (includeDeleted)
+            {
+                return await _context.WebsiteUsers.ToListAsync();
+            }
+            return await _context.WebsiteUsers.Where(w => w.DateDeleted == null).ToListAsync();
         }
 
         // GET: api/WebsiteUser/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<WebsiteUser>> GetWebsiteUser(int id)
+        public async Task<ActionResult<WebsiteUser>> GetWebsiteUser(int id, [FromQuery] bool includeDeleted = false)
         {
-            var websiteUser = await _context.WebsiteUsers.FindAsync(id);
+            var websiteUser = includeDeleted
+                ? await _context.WebsiteUsers.FindAsync(id)
+                : await _context.WebsiteUsers.Where(w => w.WebsiteUserId == id && w.DateDeleted == null).FirstOrDefaultAsync();
 
             if (websiteUser == null)
             {
@@ -90,7 +96,8 @@ namespace MudSkillsService.Controllers
                 return NotFound();
             }
 
-            _context.WebsiteUsers.Remove(websiteUser);
+            websiteUser.DateDeleted = DateTime.UtcNow;
+            _context.Entry(websiteUser).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();

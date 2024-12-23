@@ -23,16 +23,22 @@ namespace MudSkillsService.Controllers
 
         // GET: api/Skill
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Skill>>> GetSkills()
+        public async Task<ActionResult<IEnumerable<Skill>>> GetSkills([FromQuery] bool includeDeleted = false)
         {
-            return await _context.Skills.ToListAsync();
+            if (includeDeleted)
+            {
+                return await _context.Skills.ToListAsync();
+            }
+            return await _context.Skills.Where(s => s.DateDeleted == null).ToListAsync();
         }
 
         // GET: api/Skill/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Skill>> GetSkill(int id)
+        public async Task<ActionResult<Skill>> GetSkill(int id, [FromQuery] bool includeDeleted = false)
         {
-            var skill = await _context.Skills.FindAsync(id);
+            var skill = includeDeleted
+                ? await _context.Skills.FindAsync(id)
+                : await _context.Skills.Where(s => s.SkillId == id && s.DateDeleted == null).FirstOrDefaultAsync();
 
             if (skill == null)
             {
@@ -94,7 +100,8 @@ namespace MudSkillsService.Controllers
                 return NotFound();
             }
 
-            _context.Skills.Remove(skill);
+            skill.DateDeleted = DateTime.UtcNow;
+            _context.Entry(skill).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();
